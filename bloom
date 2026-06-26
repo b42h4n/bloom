@@ -1,27 +1,34 @@
+# !/usr/bin/env python3
+
 import os
+from prompt_toolkit import *
+from prompt_toolkit.key_binding import KeyBindings
+
+
+#init
 os.system("clear")
-size=os.get_terminal_size()
 lines=[]
-linescount=1
-print(f"Bloom 1.0{" "*int((size.columns/2-9)-9)}new file")
-while True:
+text=""
+print(f"Bloom 1.0{" "*int((os.get_terminal_size().columns/2-9)-9)}new file\n")
+kb = KeyBindings()
+@kb.add("c-s")
+def save_and_exit(event):
+    event.app.exit(result=event.app.current_buffer.text)
+@kb.add("c-c")
+def exit_no_save(event):
+    event.app.exit(result=None)
+
+#typing
+text = prompt("", multiline=True, key_bindings=kb)
+
+#saving
+if text:
+    lines.append(text)
+    file=input("Save to file: ")
     try:
-        lines.append(input(f"{linescount}   "))
-        linescount+=1
-    except (EOFError, KeyboardInterrupt):
-        try:
-            file=input("\nSave to file: ")
-            if not file:
-                os.system("clear")
-                print("canceled")
-                break
-            else:
-                with open(file, "w", encoding="utf-8") as fil:
-                    for i in lines:
-                        fil.write(f"{i}\n")
-                os.system("clear")
-                break
-        except (EOFError, KeyboardInterrupt):
-            os.system("clear")
-            print()
-            break
+        with open(file, "w", encoding="utf-8") as save:
+            for i in lines:
+                save.write(i)
+            save.write("\n")
+    except FileNotFoundError:
+        pass
