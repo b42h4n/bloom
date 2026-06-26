@@ -3,13 +3,26 @@
 import os
 from prompt_toolkit import *
 from prompt_toolkit.key_binding import KeyBindings
-
+import argparse
 
 #init
+def arguments():
+    parser = argparse.ArgumentParser(description="Проверка наличия аргумента")
+    parser.add_argument('my_arg', nargs='?', default=None)
+    
+    args = parser.parse_args()
+
+    if args.my_arg is not None:
+        return args.my_arg
+    else:
+        return False
+args=arguments()
 os.system("clear")
 lines=[]
 text=""
-print(f"Bloom 1.0{" "*int((os.get_terminal_size().columns/2-9)-9)}new file\n")
+print(f"Bloom 1.2{' '*int((os.get_terminal_size().columns/2-9)-9)}new file\n") if not args else print(f"Bloom 1.2{" "*int((os.get_terminal_size().columns/2-9)-9)}{args}\n")
+
+#keybinds
 kb = KeyBindings()
 @kb.add("c-s")
 def save_and_exit(event):
@@ -19,7 +32,16 @@ def exit_no_save(event):
     event.app.exit(result=None)
 
 #typing
-text = prompt("", multiline=True, key_bindings=kb)
+if not args:
+    text = prompt("", multiline=True, key_bindings=kb)
+else:
+    try:
+        with open(args, "r", encoding="utf-8") as f:
+            file_content = f.read()
+        text = prompt("", default=file_content, multiline=True, key_bindings=kb)
+    except FileNotFoundError:
+        with open(args, "w", encoding="utf-8") as f:
+                text = prompt("", multiline=True, key_bindings=kb)
 
 #saving
 if text:
