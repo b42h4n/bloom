@@ -16,43 +16,10 @@ def arguments():
         return args.my_arg
     else:
         return False
-args=arguments()
-os.system("clear")
-lines=[]
-text=""
-print(f"Bloom 1.2{' '*int((os.get_terminal_size().columns/2-9)-9)}new file\n") if not args else print(f"Bloom 1.2{" "*int((os.get_terminal_size().columns/2-9)-9)}{args}\n")
- 
-#keybinds
-kb = KeyBindings()
-@kb.add("c-s")
-def save_and_exit(event):
-    event.app.exit(result=event.app.current_buffer.text)
-@kb.add("c-c")
-def exit_no_save(event):
-    event.app.exit(result=None)
- 
-#typing
-if not args:
-    text = prompt("", multiline=True, key_bindings=kb)
-# !/usr/bin/env python3
- 
-import os
-from prompt_toolkit import *
-from prompt_toolkit.key_binding import KeyBindings
-import argparse
- 
-#init
-def arguments():
-    parser = argparse.ArgumentParser(description="Проверка наличия аргумента")
-    parser.add_argument('my_arg', nargs='?', default=None)
- 
-    args = parser.parse_args()
- 
-    if args.my_arg is not None:
-        return args.my_arg
-    else:
-        return False
-args=arguments()
+if arguments():
+    args=arguments()
+else:
+    args=""
 os.system("clear")
 lines=[]
 text=""
