@@ -1,3 +1,3 @@
-# Bloom
+# Bloom heavy
 
-Bloom is an fast and convenient terminal text editor.
+Bloom heavy is an heavyweight, but very functional version of bloom minimal text editor.
