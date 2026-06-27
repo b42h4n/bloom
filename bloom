@@ -17,10 +17,10 @@ def arguments():
 tabs = {}
 tab_order = []
 current_idx = 0
-version = 1.3
+version = "1.3.1"
 running = True
 
-# Init
+# initialazing
 initial_arg = arguments()
 if initial_arg:
     if os.path.exists(initial_arg):
@@ -36,16 +36,33 @@ else:
     tabs["new tab"] = ""
     tab_order.append("new tab")
 
-# Binds
+# binds
 kb = KeyBindings()
 
 @kb.add("c-s")
-def save_and_exit(event):
+def save_current_tab(event):
+    global current_idx
+    current_tab_name = tab_order[current_idx]
+    current_text = event.app.current_buffer.text
+    tabs[current_tab_name] = current_text
+
+    if "new tab" in current_tab_name:
+        event.app.exit(result=("save_new", current_text))
+    else:
+        try:
+            with open(current_tab_name, "w", encoding="utf-8") as f:
+                f.write(current_text)
+                if not current_text.endswith("\n"):
+                    f.write("\n")
+            event.app.exit(result="refresh")
+        except Exception:
+            event.app.exit(result="refresh")
+
+@kb.add("c-q")
+def exit_editor(event):
     global running
-    current_tab = tab_order[current_idx]
-    tabs[current_tab] = event.app.current_buffer.text
     running = False
-    event.app.exit(result="save")
+    event.app.exit(result="exit")
 
 @kb.add("c-c")
 def exit_no_save(event):
@@ -62,11 +79,11 @@ def new_tab(event):
     new_tab_name = f"new tab {len(tabs) + 1}"
     tabs[new_tab_name] = ""
     tab_order.append(new_tab_name)
-
+    
     current_idx = len(tab_order) - 1
     event.app.exit(result="switch")
 
-@kb.add("c-p")  
+@kb.add("c-p")
 def next_tab(event):
     global current_idx
     if len(tab_order) <= 1:
@@ -78,8 +95,7 @@ def next_tab(event):
     event.app.exit(result="switch")
 
 while running:
-    os.system("clear")
-    
+    os.system("clear")    
     rendered_tabs = []
     for i, tab_name in enumerate(tab_order):
         if i == current_idx:
@@ -96,27 +112,24 @@ while running:
     current_tab_name = tab_order[current_idx]
     current_text = tabs[current_tab_name]
     
-    action = prompt("", default=current_text, multiline=True, key_bindings=kb)
+    result = prompt("", default=current_text, multiline=True, key_bindings=kb)
     
-    if action == "save":
-        break
-
-if action == "save":
-    for tab_name, content in tabs.items():
-        if "new tab" in tab_name:
-            os.system("clear")
-            print(f"Tab content:\n{content}\n")
-            file_path = prompt(f"Save {tab_name} as(Leave blank to cancel): ", multiline=False)
-            if not file_path:
-                continue
-        else:
-            file_path = tab_name
-            
-        try:
-            with open(file_path, "w", encoding="utf-8") as save:
-                save.write(content)
-                if not content.endswith("\n"):
-                    save.write("\n")
-            print(f"Saved: {file_path}")
-        except Exception as e:
-            print(f"Saving error {file_path}: {e}")
+    if isinstance(result, tuple) and result[0] == "save_new":
+        text_to_save = result[1]
+        os.system("clear")
+        file_path = prompt("Save tab as: ", multiline=False)
+        
+        if file_path:
+            try:
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(text_to_save)
+                    if not text_to_save.endswith("\n"):
+                        f.write("\n")
+                
+                old_name = tab_order[current_idx]
+                tab_order[current_idx] = file_path
+                tabs[file_path] = text_to_save
+                del tabs[old_name]
+            except Exception as e:
+                print(f"Saving error: {e}")
+                input("Press enter...")
