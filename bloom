@@ -1,17 +1,18 @@
 # !/usr/bin/env python3
- 
+
 import os
 from prompt_toolkit import *
 from prompt_toolkit.key_binding import KeyBindings
 import argparse
- 
+from colorama import *
+
 #init
 def arguments():
-    parser = argparse.ArgumentParser(description="Проверка наличия аргумента")
+    parser = argparse.ArgumentParser(description="Argument check")
     parser.add_argument('my_arg', nargs='?', default=None)
- 
+    
     args = parser.parse_args()
- 
+
     if args.my_arg is not None:
         return args.my_arg
     else:
@@ -20,11 +21,13 @@ if arguments():
     args=arguments()
 else:
     args=""
+
 os.system("clear")
 lines=[]
 text=""
-print(f"Bloom 1.2{' '*int((os.get_terminal_size().columns/2-9)-9)}new file\n") if not args else print(f"Bloom 1.2{" "*int((os.get_terminal_size().columns/2-9)-9)}{args}\n")
- 
+version="1.2.1"
+tabs=[args] if args else ["new tab"]
+print(f"{Fore.BLACK + Back.WHITE}Bloom {version}    {'  '.join(tabs)}{' '*int((os.get_terminal_size().columns)-21)}{Fore.RESET}")
 #keybinds
 kb = KeyBindings()
 @kb.add("c-s")
@@ -33,7 +36,7 @@ def save_and_exit(event):
 @kb.add("c-c")
 def exit_no_save(event):
     event.app.exit(result=None)
- 
+
 #typing
 if not args:
     text = prompt("", multiline=True, key_bindings=kb)
@@ -45,7 +48,7 @@ else:
     except FileNotFoundError:
         with open(args, "w", encoding="utf-8") as f:
                 text = prompt("", multiline=True, key_bindings=kb)
- 
+
 #saving
 if text:
     lines.append(text)
