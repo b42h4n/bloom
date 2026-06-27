@@ -1,62 +1,87 @@
-# !/usr/bin/env python3
-
+#!/usr/bin/env python3
 import os
-from prompt_toolkit import *
+from prompt_toolkit import Application
+from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.document import Document
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.layout.containers import HSplit, VSplit, Window
+from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
+from prompt_toolkit.layout.layout import Layout
+from prompt_toolkit.layout.margins import NumberedMargin
+from prompt_toolkit.widgets import TextArea
 import argparse
-from colorama import *
+from colorama import Fore, Back, Style
 
-#init
 def arguments():
     parser = argparse.ArgumentParser(description="Argument check")
     parser.add_argument('my_arg', nargs='?', default=None)
-    
     args = parser.parse_args()
+    return args.my_arg if args.my_arg is not None else False
 
-    if args.my_arg is not None:
-        return args.my_arg
-    else:
-        return False
 if arguments():
-    args=arguments()
+    args = arguments()
 else:
-    args=""
+    args = ""
 
 os.system("clear")
-lines=[]
-text=""
-version="1.2.1"
-tabs=[args] if args else ["new tab"]
-print(f"{Fore.BLACK + Back.WHITE}Bloom {version}    {'  '.join(tabs)}{' '*int((os.get_terminal_size().columns)-21)}{Fore.RESET}")
-#keybinds
-kb = KeyBindings()
-@kb.add("c-s")
-def save_and_exit(event):
-    event.app.exit(result=event.app.current_buffer.text)
-@kb.add("c-c")
-def exit_no_save(event):
-    event.app.exit(result=None)
-
-#typing
-if not args:
-    text = prompt("", multiline=True, key_bindings=kb)
-else:
+version = "1.3"
+initial_text = ""
+if args:
     try:
         with open(args, "r", encoding="utf-8") as f:
-            file_content = f.read()
-        text = prompt("", default=file_content, multiline=True, key_bindings=kb)
+            initial_text = f.read()
     except FileNotFoundError:
-        with open(args, "w", encoding="utf-8") as f:
-                text = prompt("", multiline=True, key_bindings=kb)
+        open(args, "w").close()
 
-#saving
-if text:
-    lines.append(text)
-    file=prompt("Save to file: ", default=args,multiline=False, key_bindings=None)
-    try:
-        with open(file, "w", encoding="utf-8") as save:
-            for i in lines:
-                save.write(i)
-            save.write("\n")
-    except FileNotFoundError:
-        pass
+text_area = TextArea(
+    text=initial_text,
+    multiline=True,
+    scrollbar=True,
+    line_numbers=True,
+)
+
+# Status
+def get_status():
+    row = text_area.document.cursor_position_row + 1
+    col = text_area.document.cursor_position_col + 1
+    return f"Bloom minimal {version}| Ctrl+S — Save and exit  |  Ctrl+Q — Quit without saving  |  Line {row}, Column {col}"
+
+status_bar = Window(
+    content=FormattedTextControl(get_status),
+    height=1,
+    style="reverse",
+)
+
+# Binds
+kb = KeyBindings()
+saved_text = [None]
+
+@kb.add("c-s")
+def save(event):
+    saved_text[0] = text_area.text
+    event.app.exit()
+
+@kb.add("c-q")
+def exit_no_save(event):
+    saved_text[0] = None
+    event.app.exit()
+
+# Layout
+layout = Layout(HSplit([text_area, status_bar]))
+
+app = Application(layout=layout, key_bindings=kb, full_screen=True)
+app.run()
+
+# Saving
+text = saved_text[0]
+if text is not None:
+    from prompt_toolkit import prompt
+    file = prompt("Save to file: ", default=args, multiline=False)
+    if file:
+        try:
+            with open(file, "w", encoding="utf-8") as f:
+                f.write(text)
+                if not text.endswith("\n"):
+                    f.write("\n")
+        except FileNotFoundError:
+            pass
